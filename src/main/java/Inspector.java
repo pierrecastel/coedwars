@@ -1,9 +1,8 @@
-package codewars;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -109,9 +108,13 @@ public class Inspector {
         @Override
         public Optional<String> check(final Entrant entrant) {
             if (entrant.isForeigner()) {
-                final String idFromPassport = entrant.documents.get(Documents.PASSPORT).get(DocumentInformation.ID);
-                final String idFromGrantOfAsylum = entrant.documents.get("grant_of_asylum").get(DocumentInformation.ID);
-                if (!idFromPassport.equals(idFromGrantOfAsylum)) {
+                final long differentIdValues = entrant.documents.values().stream()
+                    .map(document -> document.get(DocumentInformation.ID))
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .count();
+
+                if (differentIdValues > 1) {
                     return Optional.of("Detainment: ID number mismatch.");
                 }
             }
@@ -126,7 +129,7 @@ public class Inspector {
 
     record Entrant(Map<String, Map<String, String>> documents) {
         public boolean isForeigner() {
-            return Nation.ARSTOTZKA.equals(documents.get(Documents.PASSPORT).get(DocumentInformation.NATION));
+            return !Nation.ARSTOTZKA.equals(documents.get(Documents.PASSPORT).get(DocumentInformation.NATION));
         }
     }
 }
