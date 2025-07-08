@@ -1,9 +1,10 @@
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,8 @@ public class Inspector {
 
     private final List<Rule> rules = Arrays.asList(
         new RequiredDocumentsRule(),
-        new ConflictingInformationRule()
+        new ConflictingInformationRule(),
+        new AllowedNationsRule()
     );
 
     public void receiveBulletin(final String bulletin) {
@@ -52,7 +54,7 @@ public class Inspector {
 
     private Map<String, String> extractValue(final Map.Entry<String, String> entry) {
         return Arrays.stream(entry.getValue().split("\n"))
-            .collect(Collectors.toMap(s -> s.split(":")[0], s -> s.split(":")[1]));
+            .collect(Collectors.toMap(s -> s.split(":")[0].trim(), s -> s.split(":")[1].trim()));
     }
 
     interface Rule {
@@ -63,12 +65,44 @@ public class Inspector {
         void extractFromBulletinLine(String bulletinLine);
     }
 
+    static class AllowedNationsRule implements Rule {
+
+        private static final int PRIORITY = 3;
+        private static final Pattern PATTERN = Pattern.compile(" citizens of ");
+
+        private final Set<String> allowedNations = new HashSet<>();
+
+        @Override
+        public int getPriority() {
+            return PRIORITY;
+        }
+
+        @Override
+        public Optional<String> check(final Entrant entrant) {
+            final String entrantNation = entrant.documents.get(Documents.PASSPORT).get(DocumentInformation.NATION);
+            if (!allowedNations.contains(entrantNation)) {
+                return Optional.of("Entry denied: citizen of banned nation");
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public void extractFromBulletinLine(final String bulletinLine) {
+            if (bulletinLine.contains(" citizens of ")) { // TODO à améliorer
+                List<String> allowedNationsFromBulletin = Arrays.stream(PATTERN.split(bulletinLine)[1].split(","))
+                    .map(String::trim)
+                    .toList();
+                allowedNations.addAll(allowedNationsFromBulletin);
+            }
+        }
+    }
+
     static class RequiredDocumentsRule implements Rule {
 
-        private static final Pattern PATTERN = Pattern.compile(" require ");
         private static final int PRIORITY = 2;
+        private static final Pattern PATTERN = Pattern.compile(" require ");
 
-        private final List<String> requiredDocumentsForAll = new ArrayList<>();
+        private final Set<String> requiredDocumentsForAll = new HashSet<>();
 
         @Override
         public int getPriority() {
@@ -87,7 +121,7 @@ public class Inspector {
 
         @Override
         public void extractFromBulletinLine(final String bulletinLine) {
-            if (bulletinLine.contains(" require ")) {
+            if (bulletinLine.contains(" require ")) { // TODO à améliorer
                 List<String> requiredDocuments = Arrays.stream(PATTERN.split(bulletinLine)[1].split(","))
                     .map(String::trim)
                     .toList();
@@ -98,7 +132,7 @@ public class Inspector {
 
     static class ConflictingInformationRule implements Rule {
 
-        private static final int PRIORITY = 2;
+        private static final int PRIORITY = 1;
 
         @Override
         public int getPriority() {
