@@ -147,6 +147,7 @@ public class Inspector {
         private static final Pattern PATTERN = Pattern.compile(" require ");
 
         private final Set<String> requiredDocumentsForAll = new HashSet<>();
+        private final Set<String> requiredDocumentsForForeigners = new HashSet<>();
 
         @Override
         public int getPriority() {
@@ -155,9 +156,23 @@ public class Inspector {
 
         @Override
         public Optional<String> check(final Entrant entrant) {
+            return checkRequiredDocuments(entrant)
+                .map(missingDocument -> String.format("Entry denied: missing required %s.", missingDocument.replace('_', ' ')));
+        }
+
+        private Optional<String> checkRequiredDocuments(final Entrant entrant) {
+            // TODO à améliorer
+            Optional<String> missingDocument = checkMissingDocument(requiredDocumentsForAll, entrant);
+            if (missingDocument.isEmpty() && entrant.isForeigner()) {
+                missingDocument = checkMissingDocument(requiredDocumentsForForeigners, entrant);
+            }
+            return missingDocument;
+        }
+
+        private Optional<String> checkMissingDocument(final Set<String> requiredDocumentsForAll, final Entrant entrant) {
             for (final String requiredDocument : requiredDocumentsForAll) {
                 if (!entrant.documents().containsKey(requiredDocument)) {
-                    return Optional.of("Entry denied: missing required " + requiredDocument + '.');
+                    return Optional.of(requiredDocument);
                 }
             }
             return Optional.empty();
@@ -165,12 +180,18 @@ public class Inspector {
 
         @Override
         public void extractFromBulletinLine(final String bulletinLine) {
-            if (bulletinLine.contains(" require ")) { // TODO à améliorer
-                List<String> requiredDocuments = Arrays.stream(PATTERN.split(bulletinLine)[1].split(","))
-                    .map(String::trim)
-                    .toList();
-                requiredDocumentsForAll.addAll(requiredDocuments);
+            if (bulletinLine.contains("Entrants require ")) { // TODO à améliorer
+                addRequireDocuments(bulletinLine, requiredDocumentsForAll);
+            } else if (bulletinLine.contains("Foreigners require ")) {
+                addRequireDocuments(bulletinLine, requiredDocumentsForForeigners);
             }
+        }
+
+        private void addRequireDocuments(final String bulletinLine, final Set<String> requiredDocumentsForAll1) {
+            List<String> requiredDocuments = Arrays.stream(PATTERN.split(bulletinLine)[1].split(", "))
+                .map(s -> s.replace(' ', '_'))
+                .toList();
+            requiredDocumentsForAll1.addAll(requiredDocuments);
         }
     }
 
@@ -191,7 +212,7 @@ public class Inspector {
         public Optional<String> check(final Entrant entrant) {
             for (final Entry<String, Map<String, String>> document : entrant.documents().entrySet()) {
                 if (LocalDate.parse(document.getValue().get("EXP"), DATE_FORMATTER).isBefore(today)) {
-                    return Optional.of(String.format("Entry denied: %s expired.", document.getKey()));
+                    return Optional.of(String.format("Entry denied: %s expired.", document.getKey().replace('_', ' '))); // TODO à améliorer
                 }
             }
             return Optional.empty();
@@ -214,16 +235,19 @@ public class Inspector {
 
         @Override
         public Optional<String> check(final Entrant entrant) {
-            if (entrant.isForeigner()) {
-                final long differentIdValues = entrant.documents.values().stream()
-                    .map(document -> document.get(DocumentInformation.ID))
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .count();
+            return checkConflictiongInformation(entrant, DocumentInformation.ID, "Detainment: ID number mismatch.")
+                .or(() -> checkConflictiongInformation(entrant, DocumentInformation.NATION, "Detainment: nationality mismatch."));
+        }
 
-                if (differentIdValues > 1) {
-                    return Optional.of("Detainment: ID number mismatch.");
-                }
+        private Optional<String> checkConflictiongInformation(final Entrant entrant, final String id, final String value) {
+            final long differentIdValues = entrant.documents.values().stream()
+                .map(document -> document.get(id))
+                .filter(Objects::nonNull)
+                .distinct()
+                .count();
+
+            if (differentIdValues > 1) {
+                return Optional.of(value);
             }
             return Optional.empty();
         }
