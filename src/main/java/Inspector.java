@@ -13,10 +13,15 @@ import java.util.stream.Collectors;
 
 public class Inspector {
 
+    private static class DiplomaticAuthorizationInformation {
+        public static final String ACCESSIBLE_NATIONS = "ACCESSIBLE_NATIONS";
+    }
+
     private static class Documents {
         private static final String PASSPORT = "passport";
         public static final String ACCESS_PERMIT = "access_permit";
         public static final String GRANT_OF_ASYLUM = "grant_of_asylum";
+        public static final String DIPLOMATIC_AUTHORIZATION = "diplomatic_authorization";
     }
 
     private static class DocumentInformation {
@@ -146,7 +151,9 @@ public class Inspector {
     static class RequiredDocumentsRule implements Rule {
 
         private static final int PRIORITY = 2;
-        private static final Pattern PATTERN = Pattern.compile(" require ");
+
+        private static final Pattern REQUIRE_SEPARATOR = Pattern.compile(" require ");
+        private static final Pattern COMMA_SEPARATOR = Pattern.compile(", ");
 
         private final Set<String> requiredDocumentsForAll = new HashSet<>();
         private final Set<String> requiredDocumentsForForeigners = new HashSet<>();
@@ -179,11 +186,17 @@ public class Inspector {
         }
 
         private boolean entrantHasAlternativeDocument(final Entrant entrant, final String requiredDocument) {
-            if (Documents.ACCESS_PERMIT.equals(requiredDocument)){
-                return entrant.documents.keySet().stream()
-                    .anyMatch(Documents.GRANT_OF_ASYLUM::equals);
+            if (Documents.ACCESS_PERMIT.equals(requiredDocument)) {
+                return entrant.documents.entrySet().stream()
+                    .anyMatch(document -> Documents.GRANT_OF_ASYLUM.equals(document.getKey())
+                        || (Documents.DIPLOMATIC_AUTHORIZATION.equals(document.getKey()) && isArstotzkaInAccessibleNations(document.getValue())));
             }
             return false;
+        }
+
+        private boolean isArstotzkaInAccessibleNations(final Map<String, String> diplomaticAuthorization) {
+            return Arrays.asList(COMMA_SEPARATOR.split(diplomaticAuthorization.get(DiplomaticAuthorizationInformation.ACCESSIBLE_NATIONS)))
+                .contains(Nation.ARSTOTZKA);
         }
 
         private Optional<String> checkMissingDocument(final Set<String> requiredDocumentsForAll, final Entrant entrant) {
@@ -205,7 +218,7 @@ public class Inspector {
         }
 
         private void addRequireDocuments(final String bulletinLine, final Set<String> requiredDocumentsForAll1) {
-            List<String> requiredDocuments = Arrays.stream(PATTERN.split(bulletinLine)[1].split(", "))
+            List<String> requiredDocuments = Arrays.stream(COMMA_SEPARATOR.split(REQUIRE_SEPARATOR.split(bulletinLine)[1]))
                 .map(s -> s.replace(' ', '_'))
                 .toList();
             requiredDocumentsForAll1.addAll(requiredDocuments);
