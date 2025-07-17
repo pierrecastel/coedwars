@@ -15,6 +15,8 @@ public class Inspector {
 
     private static class Documents {
         private static final String PASSPORT = "passport";
+        public static final String ACCESS_PERMIT = "access_permit";
+        public static final String GRANT_OF_ASYLUM = "grant_of_asylum";
     }
 
     private static class DocumentInformation {
@@ -166,7 +168,22 @@ public class Inspector {
         }
 
         private Optional<String> checkMissingDocumentForForeigner(final Entrant entrant) {
-            return entrant.isForeigner() ? checkMissingDocument(requiredDocumentsForForeigners, entrant) : Optional.empty();
+            if (entrant.isForeigner()) {
+                for (final String requiredDocument : requiredDocumentsForForeigners) {
+                    if (!entrant.documents().containsKey(requiredDocument) && !entrantHasAlternativeDocument(entrant, requiredDocument)) {
+                        return Optional.of(requiredDocument);
+                    }
+                }
+            }
+            return Optional.empty();
+        }
+
+        private boolean entrantHasAlternativeDocument(final Entrant entrant, final String requiredDocument) {
+            if (Documents.ACCESS_PERMIT.equals(requiredDocument)){
+                return entrant.documents.keySet().stream()
+                    .anyMatch(Documents.GRANT_OF_ASYLUM::equals);
+            }
+            return false;
         }
 
         private Optional<String> checkMissingDocument(final Set<String> requiredDocumentsForAll, final Entrant entrant) {

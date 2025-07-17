@@ -25,7 +25,7 @@ class Day3Test {
     }
 
     @Test
-    void validForeigner() {
+    void validForeigner_AlternativeAccessPermit_GrantOfAsylum() {
         Map<String, String> entrant = new HashMap<>();
         entrant.put("passport",
             """
