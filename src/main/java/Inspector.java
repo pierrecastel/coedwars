@@ -161,12 +161,12 @@ public class Inspector {
         }
 
         private Optional<String> checkRequiredDocuments(final Entrant entrant) {
-            // TODO à améliorer
-            Optional<String> missingDocument = checkMissingDocument(requiredDocumentsForAll, entrant);
-            if (missingDocument.isEmpty() && entrant.isForeigner()) {
-                missingDocument = checkMissingDocument(requiredDocumentsForForeigners, entrant);
-            }
-            return missingDocument;
+            return checkMissingDocument(requiredDocumentsForAll, entrant)
+                .or(() -> checkMissingDocumentForForeigner(entrant));
+        }
+
+        private Optional<String> checkMissingDocumentForForeigner(final Entrant entrant) {
+            return entrant.isForeigner() ? checkMissingDocument(requiredDocumentsForForeigners, entrant) : Optional.empty();
         }
 
         private Optional<String> checkMissingDocument(final Set<String> requiredDocumentsForAll, final Entrant entrant) {
