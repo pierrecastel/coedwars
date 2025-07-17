@@ -1,0 +1,14 @@
+## TODO
+
+* If entrant is a foreigner, a grant_of_asylum or diplomatic_authorization are acceptable in lieu of an access_permit. In the case where a diplomatic_authorization is used, it must include Arstotzka as one of the list of nations that can be accessed.
+
+* if any of an entrant's identifying documents include the name of that day's wanted criminal (in case of mismatched names across multiple documents), they are assumed to be the wanted criminal.
+
+* If a certificate_of_vaccination is required and provided, it must list the required vaccination
+
+* A "worker" is a foreigner entrant who has WORK listed as their purpose on their access permit
+
+
+## Add test
+
+* One wanted criminal will be specified in each daily bulletin, and must be detained when received for that day only. For example, if an entrant on Day 20 has the same name as a criminal declared on Day 10, they are not to be detained for being a criminal
