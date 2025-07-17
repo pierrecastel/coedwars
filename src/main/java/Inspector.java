@@ -100,8 +100,9 @@ public class Inspector {
 
         @Override
         public Optional<String> check(final Entrant entrant) {
-            final String entrantName = entrant.documents.get(Documents.PASSPORT).get(DocumentInformation.NAME);
-            if (criminalName.equals(entrantName)) {
+            final boolean isCriminal = entrant.documents.values().stream()
+                .anyMatch(document -> criminalName.equals(document.get(DocumentInformation.NAME)));
+            if (isCriminal) {
                 return Optional.of("Detainment: Entrant is a wanted criminal.");
             }
             return Optional.empty();
@@ -119,7 +120,7 @@ public class Inspector {
     static class AllowedNationsRule implements Rule {
 
         private static final int PRIORITY = 3;
-        private static final Pattern PATTERN = Pattern.compile(" citizens of ");
+        private static final Pattern CITIZEN_SEPARATIOR = Pattern.compile(" citizens of ");
 
         private final Set<String> allowedNations = new HashSet<>();
 
@@ -140,7 +141,7 @@ public class Inspector {
         @Override
         public void extractFromBulletinLine(final String bulletinLine) {
             if (bulletinLine.contains(" citizens of ")) { // TODO à améliorer
-                List<String> allowedNationsFromBulletin = Arrays.stream(PATTERN.split(bulletinLine)[1].split(","))
+                List<String> allowedNationsFromBulletin = Arrays.stream(CITIZEN_SEPARATIOR.split(bulletinLine)[1].split(","))
                     .map(String::trim)
                     .toList();
                 allowedNations.addAll(allowedNationsFromBulletin);

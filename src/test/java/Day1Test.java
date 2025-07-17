@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 class Day1Test {
 
-    private Inspector inspector = new Inspector();
+    private final Inspector inspector = new Inspector();
 
     @BeforeEach
     void setUpBulletin() {

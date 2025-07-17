@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 class Day2Test {
 
-    private Inspector inspector = new Inspector();
+    private final Inspector inspector = new Inspector();
 
     @BeforeEach
     void setUpBulletin() {
@@ -71,5 +71,22 @@ class Day2Test {
                 """);
 
         assertEquals("Detainment: Entrant is a wanted criminal.", inspector.inspect(entrant));
+    }
+
+    @Test
+    void formerWantedCriminal() {
+        Map<String, String> entrant = new HashMap<>();
+        entrant.put("passport",
+            """
+                passport=NATION: Antegria
+                DOB: 1955.11.13
+                SEX: F
+                ISS: St. Marmero
+                ID#: CSBWD-WQRW1
+                EXP: 1983.01.13
+                NAME: Steinberg, Victoria
+                """);
+
+        assertEquals("Entry denied: citizen of banned nation.", inspector.inspect(entrant));
     }
 }
