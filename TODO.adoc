@@ -8,3 +8,14 @@
 
 == Add test
 
+== To improve
+
+* Add document validation rule?
+
+* change return of check (Optional<String is weird)
+
+== To study
+
+* String.split() or Pattern.split() ?
+
+

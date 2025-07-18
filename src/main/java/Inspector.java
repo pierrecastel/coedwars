@@ -178,8 +178,17 @@ public class Inspector {
 
         @Override
         public Optional<String> check(final Entrant entrant) {
-            return checkRequiredDocuments(entrant)
-                .map(missingDocument -> String.format("Entry denied: missing required %s.", missingDocument.replace('_', ' ')));
+            return checkInvalidDiplomaticAuthorization(entrant).map(diplomaticAuthorization -> "Entry denied: invalid diplomatic authorization.")
+                .or(() -> checkRequiredDocuments(entrant)
+                    .map(missingDocument -> String.format("Entry denied: missing required %s.", missingDocument.replace('_', ' '))));
+        }
+
+        private Optional<String> checkInvalidDiplomaticAuthorization(final Entrant entrant) {
+            return entrant.documents.entrySet().stream()
+                .filter(document ->
+                    Documents.DIPLOMATIC_AUTHORIZATION.equals(document.getKey()) && !isArstotzkaInAccessibleNations(document.getValue()))
+                .map(stringMapEntry -> "")
+                .findFirst();
         }
 
         private Optional<String> checkRequiredDocuments(final Entrant entrant) {
@@ -202,7 +211,7 @@ public class Inspector {
             if (Documents.ACCESS_PERMIT.equals(requiredDocument)) {
                 return entrant.documents.entrySet().stream()
                     .anyMatch(document -> Documents.GRANT_OF_ASYLUM.equals(document.getKey())
-                        || (Documents.DIPLOMATIC_AUTHORIZATION.equals(document.getKey()) && isArstotzkaInAccessibleNations(document.getValue())));
+                        || Documents.DIPLOMATIC_AUTHORIZATION.equals(document.getKey()));
             }
             return false;
         }

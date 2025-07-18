@@ -99,7 +99,7 @@ class Day3Test {
                 ACCESS: Impor, United Federation
                 """);
 
-        assertEquals("Entry denied: missing required access permit.", inspector.inspect(entrant));
+        assertEquals("Entry denied: invalid diplomatic authorization.", inspector.inspect(entrant));
     }
 
     @Test
