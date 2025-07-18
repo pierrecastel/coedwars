@@ -120,7 +120,7 @@ public class Inspector {
     static class AllowedNationsRule implements Rule {
 
         private static final int PRIORITY = 3;
-        private static final Pattern CITIZEN_SEPARATIOR = Pattern.compile(" citizens of ");
+        private static final Pattern NATION_SEPARATIOR = Pattern.compile(" citizens of ");
 
         private final Set<String> allowedNations = new HashSet<>();
 
@@ -140,11 +140,14 @@ public class Inspector {
 
         @Override
         public void extractFromBulletinLine(final String bulletinLine) {
-            if (bulletinLine.contains(" citizens of ")) { // TODO à améliorer
-                List<String> allowedNationsFromBulletin = Arrays.stream(CITIZEN_SEPARATIOR.split(bulletinLine)[1].split(","))
+            if (bulletinLine.contains("Allow citizens of ")) { // TODO à améliorer
+                Arrays.stream(NATION_SEPARATIOR.split(bulletinLine)[1].split(","))
                     .map(String::trim)
-                    .toList();
-                allowedNations.addAll(allowedNationsFromBulletin);
+                    .forEach(allowedNations::add);
+            } else if (bulletinLine.contains("Deny citizens of ")) {
+                Arrays.stream(NATION_SEPARATIOR.split(bulletinLine)[1].split(","))
+                    .map(String::trim)
+                    .forEach(allowedNations::remove);
             }
         }
     }
