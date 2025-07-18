@@ -71,11 +71,7 @@ class Day3Test {
                 NAME: Wagner, Khalid
                 NATION: Obristan
                 ID#: S9GRA-KO17I
-                DOB: 1919.02.10
-                HEIGHT: 176.0cm
-                WEIGHT: 84.0kg
                 ACCESS: Impor, Arstotzka, United Federation
-                EXP: 1984.02.26
                 """);
 
         assertEquals("Cause no trouble.", inspector.inspect(entrant));
@@ -100,11 +96,7 @@ class Day3Test {
                 NAME: Wagner, Khalid
                 NATION: Obristan
                 ID#: S9GRA-KO17I
-                DOB: 1919.02.10
-                HEIGHT: 176.0cm
-                WEIGHT: 84.0kg
                 ACCESS: Impor, United Federation
-                EXP: 1984.02.26
                 """);
 
         assertEquals("Entry denied: missing required access permit.", inspector.inspect(entrant));
@@ -129,11 +121,7 @@ class Day3Test {
                 NAME: Wagner, Khalid
                 NATION: Impor
                 ID#: S9GRA-KO17I
-                DOB: 1919.02.10
-                HEIGHT: 176.0cm
-                WEIGHT: 84.0kg
                 ACCESS: Impor, Arstotzka, United Federation
-                EXP: 1984.02.26
                 """);
 
         assertEquals("Detainment: nationality mismatch.", inspector.inspect(entrant));
@@ -158,11 +146,7 @@ class Day3Test {
                 NAME: Wagner, Khalid
                 NATION: Impor
                 ID#: S9GRA-KO17I
-                DOB: 1919.02.10
-                HEIGHT: 176.0cm
-                WEIGHT: 84.0kg
                 ACCESS: Impor, Arstotzka, United Federation
-                EXP: 1984.02.26
                 """);
 
         assertEquals("Detainment: nationality mismatch.", inspector.inspect(entrant));

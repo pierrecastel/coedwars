@@ -18,7 +18,7 @@ public class Inspector {
     private LocalDate today = INITIAL_DAY;
 
     private static class DiplomaticAuthorizationInformation {
-        public static final String ACCESS = "ACCESS";
+        public static final String ACCESSIBLE_NATIONS = "ACCESS";
     }
 
     private static class Documents {
@@ -208,7 +208,7 @@ public class Inspector {
         }
 
         private boolean isArstotzkaInAccessibleNations(final Map<String, String> diplomaticAuthorization) {
-            return Arrays.asList(COMMA_SEPARATOR.split(diplomaticAuthorization.get(DiplomaticAuthorizationInformation.ACCESS)))
+            return Arrays.asList(COMMA_SEPARATOR.split(diplomaticAuthorization.get(DiplomaticAuthorizationInformation.ACCESSIBLE_NATIONS)))
                 .contains(Nation.ARSTOTZKA);
         }
 
@@ -251,11 +251,16 @@ public class Inspector {
         @Override
         public Optional<String> check(final Entrant entrant) {
             for (final Entry<String, Map<String, String>> document : entrant.documents().entrySet()) {
-                if (LocalDate.parse(document.getValue().get("EXP"), DATE_FORMATTER).isBefore(today)) {
+                if (isDateExpired(document)) {
                     return Optional.of(String.format("Entry denied: %s expired.", document.getKey().replace('_', ' '))); // TODO à améliorer
                 }
             }
             return Optional.empty();
+        }
+
+        private boolean isDateExpired(final Entry<String, Map<String, String>> document) {
+            final String expirationDate = document.getValue().get("EXP");
+            return expirationDate != null && LocalDate.parse(expirationDate, DATE_FORMATTER).isBefore(today);
         }
 
         @Override
