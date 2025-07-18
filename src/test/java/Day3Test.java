@@ -74,7 +74,7 @@ class Day3Test {
                 DOB: 1919.02.10
                 HEIGHT: 176.0cm
                 WEIGHT: 84.0kg
-                ACCESSIBLE_NATIONS: Impor, Arstotzka, United Federation
+                ACCESS: Impor, Arstotzka, United Federation
                 EXP: 1984.02.26
                 """);
 
@@ -103,7 +103,7 @@ class Day3Test {
                 DOB: 1919.02.10
                 HEIGHT: 176.0cm
                 WEIGHT: 84.0kg
-                ACCESSIBLE_NATIONS: Impor, United Federation
+                ACCESS: Impor, United Federation
                 EXP: 1984.02.26
                 """);
 
@@ -132,7 +132,7 @@ class Day3Test {
                 DOB: 1919.02.10
                 HEIGHT: 176.0cm
                 WEIGHT: 84.0kg
-                ACCESSIBLE_NATIONS: Impor, Arstotzka, United Federation
+                ACCESS: Impor, Arstotzka, United Federation
                 EXP: 1984.02.26
                 """);
 
@@ -161,7 +161,7 @@ class Day3Test {
                 DOB: 1919.02.10
                 HEIGHT: 176.0cm
                 WEIGHT: 84.0kg
-                ACCESSIBLE_NATIONS: Impor, Arstotzka, United Federation
+                ACCESS: Impor, Arstotzka, United Federation
                 EXP: 1984.02.26
                 """);
 

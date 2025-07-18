@@ -89,4 +89,21 @@ class Day2Test {
 
         assertEquals("Entry denied: citizen of banned nation.", inspector.inspect(entrant));
     }
+
+    @Test
+    void errorPassportExpired() {
+        Map<String, String> entrant = new HashMap<>();
+        entrant.put("passport",
+            """
+                NATION: Republia
+                DOB: 1935.09.17
+                SEX: F
+                ISS: True Glorian
+                ID#: UCOWN-RBMVS
+                EXP: 1982.11.26
+                NAME: Fischer, Anastasia
+                """);
+
+        assertEquals("Cause no trouble.", inspector.inspect(entrant));
+    }
 }

@@ -13,8 +13,12 @@ import java.util.stream.Collectors;
 
 public class Inspector {
 
+    private static final LocalDate INITIAL_DAY = LocalDate.of(1982, 11, 22);
+
+    private LocalDate today = INITIAL_DAY;
+
     private static class DiplomaticAuthorizationInformation {
-        public static final String ACCESSIBLE_NATIONS = "ACCESSIBLE_NATIONS";
+        public static final String ACCESS = "ACCESS";
     }
 
     private static class Documents {
@@ -43,14 +47,8 @@ public class Inspector {
     );
 
     public void receiveBulletin(final String bulletin) {
+        addOneDay();
         updateRules(bulletin);
-    }
-
-    private void updateRules(final String bulletin) {
-        System.err.println(bulletin);
-        for (final String bulletinLine : bulletin.split("\n")) {
-            rules.forEach(rule -> rule.extractFromBulletinLine(bulletinLine));
-        }
     }
 
     public String inspect(final Map<String, String> person) {
@@ -58,6 +56,17 @@ public class Inspector {
         final String result = checkRules(person);
         System.err.println(result);
         return result;
+    }
+
+    private void addOneDay() {
+        today = today.plusDays(1);
+    }
+
+    private void updateRules(final String bulletin) {
+        System.err.println(bulletin);
+        for (final String bulletinLine : bulletin.split("\n")) {
+            rules.forEach(rule -> rule.extractFromBulletinLine(bulletinLine));
+        }
     }
 
     private String checkRules(final Map<String, String> person) {
@@ -86,7 +95,7 @@ public class Inspector {
         void extractFromBulletinLine(String bulletinLine);
     }
 
-    static class WantedCriminalRule implements Rule {
+    private static class WantedCriminalRule implements Rule {
 
         private static final int PRIORITY = 1;
         private static final Pattern PATTERN = Pattern.compile(":");
@@ -117,7 +126,7 @@ public class Inspector {
         }
     }
 
-    static class AllowedNationsRule implements Rule {
+    private static class AllowedNationsRule implements Rule {
 
         private static final int PRIORITY = 3;
         private static final Pattern NATION_SEPARATIOR = Pattern.compile(" citizens of ");
@@ -152,7 +161,7 @@ public class Inspector {
         }
     }
 
-    static class RequiredDocumentsRule implements Rule {
+    private static class RequiredDocumentsRule implements Rule {
 
         private static final int PRIORITY = 2;
 
@@ -199,7 +208,7 @@ public class Inspector {
         }
 
         private boolean isArstotzkaInAccessibleNations(final Map<String, String> diplomaticAuthorization) {
-            return Arrays.asList(COMMA_SEPARATOR.split(diplomaticAuthorization.get(DiplomaticAuthorizationInformation.ACCESSIBLE_NATIONS)))
+            return Arrays.asList(COMMA_SEPARATOR.split(diplomaticAuthorization.get(DiplomaticAuthorizationInformation.ACCESS)))
                 .contains(Nation.ARSTOTZKA);
         }
 
@@ -229,13 +238,10 @@ public class Inspector {
         }
     }
 
-    static class ExpiredDocumentRule implements Rule {
+    private class ExpiredDocumentRule implements Rule {
 
         private static final int PRIORITY = 3;
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
-        private static final LocalDate INITIAL_DAY = LocalDate.of(1982, 11, 22);
-
-        private LocalDate today = INITIAL_DAY;
 
         @Override
         public int getPriority() {
@@ -254,11 +260,11 @@ public class Inspector {
 
         @Override
         public void extractFromBulletinLine(final String bulletinLine) {
-            today = today.plusDays(1);
+            // Nothing to do.
         }
     }
 
-    static class ConflictingInformationRule implements Rule {
+    private static class ConflictingInformationRule implements Rule {
 
         private static final int PRIORITY = 1;
 
