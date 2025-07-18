@@ -35,10 +35,10 @@ public class Inspector {
     }
 
     private final List<Rule> rules = Arrays.asList(
-        new RequiredDocumentsRule(),
         new WantedCriminalRule(),
-        new ExpiredDocumentRule(),
         new ConflictingInformationRule(),
+        new RequiredDocumentsRule(),
+        new ExpiredDocumentRule(),
         new AllowedNationsRule()
     );
 
@@ -270,9 +270,9 @@ public class Inspector {
                 .or(() -> checkConflictiongInformation(entrant, DocumentInformation.NATION, "Detainment: nationality mismatch."));
         }
 
-        private Optional<String> checkConflictiongInformation(final Entrant entrant, final String id, final String value) {
+        private Optional<String> checkConflictiongInformation(final Entrant entrant, final String information, final String value) {
             final long differentIdValues = entrant.documents.values().stream()
-                .map(document -> document.get(id))
+                .map(document -> document.get(information))
                 .filter(Objects::nonNull)
                 .distinct()
                 .count();

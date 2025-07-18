@@ -109,4 +109,62 @@ class Day3Test {
 
         assertEquals("Entry denied: missing required access permit.", inspector.inspect(entrant));
     }
+
+    @Test
+    void conflictingInformation_NationalityMismatch() {
+        Map<String, String> entrant = new HashMap<>();
+        entrant.put("passport",
+            """
+                NATION: Obristan
+                DOB: 1919.02.10
+                SEX: M
+                ISS: Mergerous
+                ID#: S9GRA-KO17I
+                EXP: 1984.11.01
+                NAME: Wagner, Khalid
+                """);
+
+        entrant.put("diplomatic_authorization",
+            """
+                NAME: Wagner, Khalid
+                NATION: Impor
+                ID#: S9GRA-KO17I
+                DOB: 1919.02.10
+                HEIGHT: 176.0cm
+                WEIGHT: 84.0kg
+                ACCESSIBLE_NATIONS: Impor, Arstotzka, United Federation
+                EXP: 1984.02.26
+                """);
+
+        assertEquals("Detainment: nationality mismatch.", inspector.inspect(entrant));
+    }
+
+    @Test
+    void conflictingInformationAndExpiredPassport () {
+        Map<String, String> entrant = new HashMap<>();
+        entrant.put("passport",
+            """
+                NATION: Obristan
+                DOB: 1919.02.10
+                SEX: M
+                ISS: Mergerous
+                ID#: S9GRA-KO17I
+                EXP: 1974.11.01
+                NAME: Wagner, Khalid
+                """);
+
+        entrant.put("diplomatic_authorization",
+            """
+                NAME: Wagner, Khalid
+                NATION: Impor
+                ID#: S9GRA-KO17I
+                DOB: 1919.02.10
+                HEIGHT: 176.0cm
+                WEIGHT: 84.0kg
+                ACCESSIBLE_NATIONS: Impor, Arstotzka, United Federation
+                EXP: 1984.02.26
+                """);
+
+        assertEquals("Detainment: nationality mismatch.", inspector.inspect(entrant));
+    }
 }
