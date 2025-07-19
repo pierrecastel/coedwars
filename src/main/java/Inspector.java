@@ -122,7 +122,7 @@ public class Inspector {
 
     private static class AllowedNationsRule implements Rule {
 
-        private static final Pattern NATION_SEPARATIOR = Pattern.compile(" citizens of ");
+        private static final Pattern NATION_SEPARATOR = Pattern.compile(" citizens of ");
 
         private final Set<String> allowedNations = new HashSet<>();
 
@@ -138,11 +138,11 @@ public class Inspector {
         @Override
         public void extractFromBulletinLine(final String bulletinLine) {
             if (bulletinLine.contains("Allow citizens of ")) { // TODO à améliorer
-                Arrays.stream(NATION_SEPARATIOR.split(bulletinLine)[1].split(","))
+                Arrays.stream(NATION_SEPARATOR.split(bulletinLine)[1].split(","))
                     .map(String::trim)
                     .forEach(allowedNations::add);
             } else if (bulletinLine.contains("Deny citizens of ")) {
-                Arrays.stream(NATION_SEPARATIOR.split(bulletinLine)[1].split(","))
+                Arrays.stream(NATION_SEPARATOR.split(bulletinLine)[1].split(","))
                     .map(String::trim)
                     .forEach(allowedNations::remove);
             }
@@ -257,11 +257,11 @@ public class Inspector {
 
         @Override
         public Optional<String> check(final Entrant entrant) {
-            return checkConflictiongInformation(entrant, DocumentInformation.ID, "Detainment: ID number mismatch.")
-                .or(() -> checkConflictiongInformation(entrant, DocumentInformation.NATION, "Detainment: nationality mismatch."));
+            return checkConflictingInformation(entrant, DocumentInformation.ID, "Detainment: ID number mismatch.")
+                .or(() -> checkConflictingInformation(entrant, DocumentInformation.NATION, "Detainment: nationality mismatch."));
         }
 
-        private Optional<String> checkConflictiongInformation(final Entrant entrant, final String information, final String value) {
+        private Optional<String> checkConflictingInformation(final Entrant entrant, final String information, final String value) {
             final long differentIdValues = entrant.documents.values().stream()
                 .map(document -> document.get(information))
                 .filter(Objects::nonNull)
