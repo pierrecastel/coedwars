@@ -89,8 +89,6 @@ public class Inspector {
     }
 
     interface Rule {
-        int getPriority();
-
         Optional<String> check(Entrant entrant);
 
         void extractFromBulletinLine(String bulletinLine);
@@ -98,16 +96,10 @@ public class Inspector {
 
     private static class WantedCriminalRule implements Rule {
 
-        private static final int PRIORITY = 1;
         private static final Pattern PATTERN = Pattern.compile(":");
         private static final String UNDEFINED_CRIMINAL = "";
 
         private String criminalName = UNDEFINED_CRIMINAL;
-
-        @Override
-        public int getPriority() {
-            return PRIORITY;
-        }
 
         @Override
         public Optional<String> check(final Entrant entrant) {
@@ -130,15 +122,9 @@ public class Inspector {
 
     private static class AllowedNationsRule implements Rule {
 
-        private static final int PRIORITY = 3;
         private static final Pattern NATION_SEPARATIOR = Pattern.compile(" citizens of ");
 
         private final Set<String> allowedNations = new HashSet<>();
-
-        @Override
-        public int getPriority() {
-            return PRIORITY;
-        }
 
         @Override
         public Optional<String> check(final Entrant entrant) {
@@ -165,18 +151,11 @@ public class Inspector {
 
     private static class RequiredDocumentsRule implements Rule {
 
-        private static final int PRIORITY = 2;
-
         private static final Pattern REQUIRE_SEPARATOR = Pattern.compile(" require ");
         private static final Pattern COMMA_SEPARATOR = Pattern.compile(", ");
 
         private final Set<String> requiredDocumentsForAll = new HashSet<>();
         private final Set<String> requiredDocumentsForForeigners = new HashSet<>();
-
-        @Override
-        public int getPriority() {
-            return PRIORITY;
-        }
 
         @Override
         public Optional<String> check(final Entrant entrant) {
@@ -251,13 +230,7 @@ public class Inspector {
 
     private class ExpiredDocumentRule implements Rule {
 
-        private static final int PRIORITY = 3;
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
-
-        @Override
-        public int getPriority() {
-            return PRIORITY;
-        }
 
         @Override
         public Optional<String> check(final Entrant entrant) {
@@ -281,13 +254,6 @@ public class Inspector {
     }
 
     private static class ConflictingInformationRule implements Rule {
-
-        private static final int PRIORITY = 1;
-
-        @Override
-        public int getPriority() {
-            return PRIORITY;
-        }
 
         @Override
         public Optional<String> check(final Entrant entrant) {
