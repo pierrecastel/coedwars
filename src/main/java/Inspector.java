@@ -48,6 +48,7 @@ public class Inspector {
 
     public void receiveBulletin(final String bulletin) {
         addOneDay();
+        System.err.println("Today is " + today);
         updateRules(bulletin);
     }
 
@@ -99,8 +100,9 @@ public class Inspector {
 
         private static final int PRIORITY = 1;
         private static final Pattern PATTERN = Pattern.compile(":");
+        private static final String UNDEFINED_CRIMINAL = "";
 
-        private String criminalName = "UNDEFINED";
+        private String criminalName = UNDEFINED_CRIMINAL;
 
         @Override
         public int getPriority() {

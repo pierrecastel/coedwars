@@ -17,8 +17,14 @@ class Day3Test {
                 Entrants require passport
                 Allow citizens of Arstotzka
                 Wanted by the State: Isaak Strauss
+                """);
+        inspector.receiveBulletin(
+            """
                 Allow citizens of Antegria, Impor, Kolechia, Obristan, Republia, United Federation
                 Wanted by the State: Sarah Czekowicz
+                """);
+        inspector.receiveBulletin(
+            """
                 Foreigners require access permit
                 Wanted by the State: Hector Radic
                 """);

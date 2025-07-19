@@ -6,7 +6,7 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class Day4Test {
+class Day5Test {
 
     private final Inspector inspector = new Inspector();
 
@@ -33,10 +33,14 @@ class Day4Test {
                 Deny citizens of Antegria
                 Citizens of Arstotzka require ID card
                 """);
+        inspector.receiveBulletin(
+            """
+                Deny citizens of Antegria
+                """);
     }
 
     @Test
-    void validForeigner_AlternativeAccessPermit_GrantOfAsylum() {
+    void denyForbiddenCountry() {
         Map<String, String> entrant = new HashMap<>();
         entrant.put("passport",
             """
@@ -63,28 +67,4 @@ class Day4Test {
         assertEquals("Entry denied: citizen of banned nation.", inspector.inspect(entrant));
     }
 
-    @Test
-    void citizenOfArstotzka_requireIdCard() {
-        Map<String, String> entrant = new HashMap<>();
-        entrant.put("passport",
-            """
-                NATION: Arstotzka
-                DOB: 1956.10.16
-                SEX: F
-                ISS: Orvech Vonor
-                ID#: V8K6H-FIS4C
-                EXP: 1983.03.17
-                NAME: Jager, Cameron
-                """);
-
-        entrant.put("ID_card",
-            """
-                NAME: Jager, Cameron
-                DOB: 1956.10.16
-                HEIGHT: 162.0cm
-                WEIGHT: 65.0kg
-                """);
-
-        assertEquals("Glory to Arstotzka.", inspector.inspect(entrant));
-    }
 }

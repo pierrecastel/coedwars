@@ -17,6 +17,9 @@ class Day2Test {
                 Entrants require passport
                 Allow citizens of Arstotzka
                 Wanted by the State: Victoria Steinberg
+                """);
+        inspector.receiveBulletin(
+            """
                 Allow citizens of Antegria, Impor, Kolechia, Obristan, Republia, United Federation
                 Wanted by the State: Andrew Rosebrova
                 """);
