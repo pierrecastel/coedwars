@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -43,7 +44,8 @@ public class Inspector {
         new ConflictingInformationRule(),
         new RequiredDocumentsRule(),
         new ExpiredDocumentRule(),
-        new AllowedNationsRule()
+        new AllowedNationsRule(),
+        new VaccinationRule()
     );
 
     public void receiveBulletin(final String bulletin) {
@@ -151,6 +153,7 @@ public class Inspector {
 
     private static class RequiredDocumentsRule implements Rule {
 
+        public static final Pattern REQUIRED_DOCUMENTS_PATTERN = Pattern.compile("(.*) require (.*)(?<!vaccination)$");
         private static final Pattern REQUIRE_SEPARATOR = Pattern.compile(" require ");
         private static final Pattern COMMA_SEPARATOR = Pattern.compile(", ");
 
@@ -213,18 +216,54 @@ public class Inspector {
 
         @Override
         public void extractFromBulletinLine(final String bulletinLine) {
-            if (bulletinLine.contains("Entrants require ")) { // TODO à améliorer
-                addRequireDocuments(bulletinLine, requiredDocumentsForAll);
-            } else if (bulletinLine.contains("Foreigners require ")) {
-                addRequireDocuments(bulletinLine, requiredDocumentsForForeigners);
+            final Matcher matcher = REQUIRED_DOCUMENTS_PATTERN.matcher(bulletinLine);
+            if (matcher.matches()) {
+                final String target = matcher.group(1);
+                if ("Entrants".equals(target)) {
+                    addRequireDocuments(bulletinLine, requiredDocumentsForAll);
+                } else if ("Foreigners".equals(target)) {
+                    addRequireDocuments(bulletinLine, requiredDocumentsForForeigners);
+                }
             }
         }
 
-        private void addRequireDocuments(final String bulletinLine, final Set<String> requiredDocumentsForAll1) {
-            List<String> requiredDocuments = Arrays.stream(COMMA_SEPARATOR.split(REQUIRE_SEPARATOR.split(bulletinLine)[1]))
+        private void addRequireDocuments(final String bulletinLine, final Set<String> requiredDocumentsForAll) {
+            Arrays.stream(COMMA_SEPARATOR.split(REQUIRE_SEPARATOR.split(bulletinLine)[1]))
                 .map(s -> s.replace(' ', '_'))
-                .toList();
-            requiredDocumentsForAll1.addAll(requiredDocuments);
+                .forEach(requiredDocumentsForAll::add);
+        }
+    }
+
+    private static class VaccinationRule implements Rule {
+
+        public static final Pattern VACCINATION_PATTERN = Pattern.compile(".* require (.*) vaccination");
+        private static final Pattern COMMA_SEPARATOR = Pattern.compile(", ");
+
+        private final Set<String> requiredVaccinations = new HashSet<>();
+
+        @Override
+        public Optional<String> check(final Entrant entrant) {
+            for (final String requiredVaccination : requiredVaccinations) {
+                final Map<String, String> certificateOfVaccination = entrant.documents.get("certificate_of_vaccination");
+                if (certificateOfVaccination == null || hasNotRequiredVaccination(requiredVaccination, certificateOfVaccination)) {
+                    return Optional.of(requiredVaccination);
+                }
+            }
+            return Optional.empty();
+        }
+
+        private boolean hasNotRequiredVaccination(final String requiredVaccination, final Map<String, String> certificateOfVaccination) {
+            return Arrays.stream(COMMA_SEPARATOR.split(certificateOfVaccination.get("VACCINES")))
+                .noneMatch(requiredVaccination::equals);
+        }
+
+        @Override
+        public void extractFromBulletinLine(final String bulletinLine) {
+            final Matcher matcher = VACCINATION_PATTERN.matcher(bulletinLine);
+            if (matcher.matches()) {
+                final String vaccinations = matcher.group(1);
+                requiredVaccinations.addAll(Arrays.asList(COMMA_SEPARATOR.split(vaccinations)));
+            }
         }
     }
 
