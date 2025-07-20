@@ -1,6 +1,7 @@
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,20 +20,22 @@ public class Inspector {
     private LocalDate today = INITIAL_DAY;
 
     private static class DiplomaticAuthorizationInformation {
-        public static final String ACCESSIBLE_NATIONS = "ACCESS";
+        private static final String ACCESSIBLE_NATIONS = "ACCESS";
     }
 
     private static class Documents {
         private static final String PASSPORT = "passport";
-        public static final String ACCESS_PERMIT = "access_permit";
-        public static final String GRANT_OF_ASYLUM = "grant_of_asylum";
-        public static final String DIPLOMATIC_AUTHORIZATION = "diplomatic_authorization";
+        private static final String ACCESS_PERMIT = "access_permit";
+        private static final String GRANT_OF_ASYLUM = "grant_of_asylum";
+        private static final String DIPLOMATIC_AUTHORIZATION = "diplomatic_authorization";
+        private static final String CERTIFICATE_OF_VACCINATION = "certificate_of_vaccination";
     }
 
     private static class DocumentInformation {
         private static final String ID = "ID#";
         private static final String NATION = "NATION";
         private static final String NAME = "NAME";
+        private static final String VACCINES = "VACCINES";
     }
 
     private static class Nation {
@@ -154,11 +157,11 @@ public class Inspector {
     private static class RequiredDocumentsRule implements Rule {
 
         public static final Pattern REQUIRED_DOCUMENTS_PATTERN = Pattern.compile("(.*) require (.*)(?<!vaccination)$");
-        private static final Pattern REQUIRE_SEPARATOR = Pattern.compile(" require ");
         private static final Pattern COMMA_SEPARATOR = Pattern.compile(", ");
 
         private final Set<String> requiredDocumentsForAll = new HashSet<>();
         private final Set<String> requiredDocumentsForForeigners = new HashSet<>();
+        private final Set<String> requiredDocumentsForCitizens = new HashSet<>();
 
         @Override
         public Optional<String> check(final Entrant entrant) {
@@ -177,13 +180,25 @@ public class Inspector {
 
         private Optional<String> checkRequiredDocuments(final Entrant entrant) {
             return checkMissingDocument(requiredDocumentsForAll, entrant)
-                .or(() -> checkMissingDocumentForForeigner(entrant));
+                .or(() -> checkMissingDocumentForForeigner(entrant))
+                .or(() -> checkMissingDocumentForCitizen(entrant));
         }
 
         private Optional<String> checkMissingDocumentForForeigner(final Entrant entrant) {
             if (entrant.isForeigner()) {
                 for (final String requiredDocument : requiredDocumentsForForeigners) {
                     if (!entrant.documents().containsKey(requiredDocument) && !entrantHasAlternativeDocument(entrant, requiredDocument)) {
+                        return Optional.of(requiredDocument);
+                    }
+                }
+            }
+            return Optional.empty();
+        }
+
+        private Optional<String> checkMissingDocumentForCitizen(final Entrant entrant) {
+            if (!entrant.isForeigner()) {
+                for (final String requiredDocument : requiredDocumentsForCitizens) {
+                    if (!entrant.documents().containsKey(requiredDocument)) {
                         return Optional.of(requiredDocument);
                     }
                 }
@@ -219,16 +234,19 @@ public class Inspector {
             final Matcher matcher = REQUIRED_DOCUMENTS_PATTERN.matcher(bulletinLine);
             if (matcher.matches()) {
                 final String target = matcher.group(1);
-                if ("Entrants".equals(target)) {
-                    addRequireDocuments(bulletinLine, requiredDocumentsForAll);
-                } else if ("Foreigners".equals(target)) {
-                    addRequireDocuments(bulletinLine, requiredDocumentsForForeigners);
-                }
+                final Set<String> targetList = switch (target) {
+                    case "Entrants" -> requiredDocumentsForAll;
+                    case "Foreigners" -> requiredDocumentsForForeigners;
+                    case "Citizens of Arstotzka" -> requiredDocumentsForCitizens;
+                    default -> throw new IllegalStateException("Unexpected value: " + target);
+                };
+                final String requiredDocuments = matcher.group(2);
+                addRequireDocuments(requiredDocuments, targetList);
             }
         }
 
-        private void addRequireDocuments(final String bulletinLine, final Set<String> requiredDocumentsForAll) {
-            Arrays.stream(COMMA_SEPARATOR.split(REQUIRE_SEPARATOR.split(bulletinLine)[1]))
+        private void addRequireDocuments(final String requiredDocuments, final Set<String> requiredDocumentsForAll) {
+            Arrays.stream(COMMA_SEPARATOR.split(requiredDocuments))
                 .map(s -> s.replace(' ', '_'))
                 .forEach(requiredDocumentsForAll::add);
         }
@@ -236,15 +254,22 @@ public class Inspector {
 
     private static class VaccinationRule implements Rule {
 
-        public static final Pattern VACCINATION_PATTERN = Pattern.compile(".* require (.*) vaccination");
+        private static final Pattern VACCINATION_PATTERN = Pattern.compile("(.*) require (.*) vaccination");
         private static final Pattern COMMA_SEPARATOR = Pattern.compile(", ");
 
-        private final Set<String> requiredVaccinations = new HashSet<>();
+        private final Set<String> requiredVaccinationsForAll = new HashSet<>();
+        private final Map<String, Set<String>> requiredVaccinationsByNation = new HashMap<>();
 
         @Override
         public Optional<String> check(final Entrant entrant) {
-            for (final String requiredVaccination : requiredVaccinations) {
-                final Map<String, String> certificateOfVaccination = entrant.documents.get("certificate_of_vaccination");
+            return checkRequiredVaccinationsForAll(entrant)
+                .or(() -> checkRequiredVaccinationsByCountry(entrant))
+                .map("Entry denied: missing required %s vaccination."::formatted);
+        }
+
+        private Optional<String> checkRequiredVaccinationsForAll(final Entrant entrant) {
+            for (final String requiredVaccination : requiredVaccinationsForAll) {
+                final Map<String, String> certificateOfVaccination = entrant.documents.get(Documents.CERTIFICATE_OF_VACCINATION);
                 if (certificateOfVaccination == null || hasNotRequiredVaccination(requiredVaccination, certificateOfVaccination)) {
                     return Optional.of(requiredVaccination);
                 }
@@ -252,8 +277,20 @@ public class Inspector {
             return Optional.empty();
         }
 
+        private Optional<String> checkRequiredVaccinationsByCountry(final Entrant entrant) {
+            if (requiredVaccinationsByNation.containsKey(entrant.getNation())) {
+                for (final String requiredVaccination : requiredVaccinationsByNation.get(entrant.getNation())) {
+                    final Map<String, String> certificateOfVaccination = entrant.documents.get(Documents.CERTIFICATE_OF_VACCINATION);
+                    if (certificateOfVaccination == null || hasNotRequiredVaccination(requiredVaccination, certificateOfVaccination)) {
+                        return Optional.of(requiredVaccination);
+                    }
+                }
+            }
+            return Optional.empty();
+        }
+
         private boolean hasNotRequiredVaccination(final String requiredVaccination, final Map<String, String> certificateOfVaccination) {
-            return Arrays.stream(COMMA_SEPARATOR.split(certificateOfVaccination.get("VACCINES")))
+            return Arrays.stream(COMMA_SEPARATOR.split(certificateOfVaccination.get(DocumentInformation.VACCINES)))
                 .noneMatch(requiredVaccination::equals);
         }
 
@@ -261,9 +298,19 @@ public class Inspector {
         public void extractFromBulletinLine(final String bulletinLine) {
             final Matcher matcher = VACCINATION_PATTERN.matcher(bulletinLine);
             if (matcher.matches()) {
-                final String vaccinations = matcher.group(1);
-                requiredVaccinations.addAll(Arrays.asList(COMMA_SEPARATOR.split(vaccinations)));
+                final List<String> vaccinations = Arrays.asList(COMMA_SEPARATOR.split(matcher.group(2)));
+                final String target = matcher.group(1);
+                if (target.equals("Entrants")) {
+                    requiredVaccinationsForAll.addAll(vaccinations);
+                } else {
+                    addRequiredVaccinationsForNations(target, vaccinations);
+                }
             }
+        }
+
+        private void addRequiredVaccinationsForNations(final String target, final List<String> vaccinations) {
+            Arrays.stream(COMMA_SEPARATOR.split(target))
+                .forEach(nation -> requiredVaccinationsByNation.put(nation, new HashSet<>(vaccinations)));
         }
     }
 
@@ -321,7 +368,11 @@ public class Inspector {
 
     record Entrant(Map<String, Map<String, String>> documents) {
         public boolean isForeigner() {
-            return !Nation.ARSTOTZKA.equals(documents.get(Documents.PASSPORT).get(DocumentInformation.NATION));
+            return !Nation.ARSTOTZKA.equals(getNation());
+        }
+
+        public String getNation() {
+            return documents.get(Documents.PASSPORT).get(DocumentInformation.NATION);
         }
     }
 }

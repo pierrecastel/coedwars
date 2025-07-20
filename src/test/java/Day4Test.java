@@ -64,7 +64,7 @@ class Day4Test {
     }
 
     @Test
-    void citizenOfArstotzka_requireIdCard() {
+    void valid_CitizenOfArstotzka_requireIdCard() {
         Map<String, String> entrant = new HashMap<>();
         entrant.put("passport",
             """
@@ -86,5 +86,22 @@ class Day4Test {
                 """);
 
         assertEquals("Glory to Arstotzka.", inspector.inspect(entrant));
+    }
+
+    @Test
+    void invalid_citizenOfArstotzka_requireIdCard() {
+        Map<String, String> entrant = new HashMap<>();
+        entrant.put("passport",
+            """
+                NATION: Arstotzka
+                DOB: 1956.10.16
+                SEX: F
+                ISS: Orvech Vonor
+                ID#: V8K6H-FIS4C
+                EXP: 1983.03.17
+                NAME: Jager, Cameron
+                """);
+
+        assertEquals("Entry denied: missing required ID card.", inspector.inspect(entrant));
     }
 }

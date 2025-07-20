@@ -37,16 +37,18 @@ class Day6Test {
             """
                 Deny citizens of Antegria
                 """);
+
+    }
+
+    @Test
+    void validForeigner_WithNeededVaccination() {
         inspector.receiveBulletin(
             """
                 Allow citizens of Antegria
                 Deny citizens of Kolechia
                 Entrants require polio vaccination
                 """);
-    }
 
-    @Test
-    void validForeigner_withPolioVaccination() {
         Map<String, String> entrant = new HashMap<>();
         entrant.put("passport",
             """
@@ -75,6 +77,118 @@ class Day6Test {
                 NAME: Wagner, Khalid
                 ID#: S9GRA-KO17I
                 VACCINES: polio, HPV, cowpox
+                """);
+
+        assertEquals("Cause no trouble.", inspector.inspect(entrant));
+    }
+
+    @Test
+    void invalidForeigner_WithoutNeededVaccination() {
+        inspector.receiveBulletin(
+            """
+                Allow citizens of Antegria
+                Deny citizens of Kolechia
+                Entrants require polio vaccination
+                """);
+
+        Map<String, String> entrant = new HashMap<>();
+        entrant.put("passport",
+            """
+                NATION: Antegria
+                DOB: 1919.02.10
+                SEX: M
+                ISS: Mergerous
+                ID#: S9GRA-KO17I
+                EXP: 1984.11.01
+                NAME: Wagner, Khalid
+                """);
+
+        entrant.put("grant_of_asylum",
+            """
+                NAME: Wagner, Khalid
+                NATION: Antegria
+                ID#: S9GRA-KO17I
+                DOB: 1919.02.10
+                HEIGHT: 176.0cm
+                WEIGHT: 84.0kg
+                EXP: 1984.02.26
+                """);
+
+        entrant.put("certificate_of_vaccination",
+            """
+                NAME: Wagner, Khalid
+                ID#: S9GRA-KO17I
+                VACCINES: HPV, cowpox
+                """);
+
+        assertEquals("Entry denied: missing required polio vaccination.", inspector.inspect(entrant));
+    }
+
+    @Test
+    void invalidForeigner_WithoutCertificateOfVaccination() {
+        inspector.receiveBulletin(
+            """
+                Allow citizens of Antegria
+                Deny citizens of Kolechia
+                Entrants require polio vaccination
+                """);
+
+        Map<String, String> entrant = new HashMap<>();
+        entrant.put("passport",
+            """
+                NATION: Antegria
+                DOB: 1919.02.10
+                SEX: M
+                ISS: Mergerous
+                ID#: S9GRA-KO17I
+                EXP: 1984.11.01
+                NAME: Wagner, Khalid
+                """);
+
+        entrant.put("grant_of_asylum",
+            """
+                NAME: Wagner, Khalid
+                NATION: Antegria
+                ID#: S9GRA-KO17I
+                DOB: 1919.02.10
+                HEIGHT: 176.0cm
+                WEIGHT: 84.0kg
+                EXP: 1984.02.26
+                """);
+
+        assertEquals("Entry denied: missing required polio vaccination.", inspector.inspect(entrant));
+    }
+
+    @Test
+    void validForeigner_NotTargetedByVaccination() {
+        inspector.receiveBulletin(
+            """
+                Allow citizens of Antegria
+                Deny citizens of Kolechia
+                Citizens of United Federation, Kolechia require polio vaccination
+                """);
+
+        Map<String, String> entrant = new HashMap<>();
+        entrant.put("passport",
+            """
+                NATION: Antegria
+                DOB: 1919.02.10
+                SEX: M
+                ISS: Mergerous
+                ID#: S9GRA-KO17I
+                EXP: 1984.11.01
+                NAME: Wagner, Khalid
+                """);
+
+        entrant.put("grant_of_asylum",
+            """
+                NAME: Wagner, Khalid
+                NATION: Antegria
+                ID#: S9GRA-KO17I
+                DOB: 1919.02.10
+                HEIGHT: 176.0cm
+                WEIGHT: 84.0kg
+                EXP: 1984.02.26
                 """);
 
         assertEquals("Cause no trouble.", inspector.inspect(entrant));

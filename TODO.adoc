@@ -1,9 +1,5 @@
 == TODO
 
-* if any of an entrant's identifying documents include the name of that day's wanted criminal (in case of mismatched names across multiple documents), they are assumed to be the wanted criminal.
-
-* If a certificate_of_vaccination is required and provided, it must list the required vaccination
-
 * A "worker" is a foreigner entrant who has WORK listed as their purpose on their access permit
 
 == Add test
@@ -12,10 +8,26 @@
 
 * Add document validation rule?
 
-* change return of check (Optional<String is weird)
+* change return of check (Optional<String> is weird)
+
+* Regroup tests by type (criminal, vaccination) + test priority/conflicts
+
+* externalize bulletin parsing with design pattern
 
 == To study
 
-* String.split() or Pattern.split() ?
+== To share
 
+* or et method reference sur string.formatted()
+[,java]
+----
+checkRequiredVaccinationsForAll(entrant)
+.or(() -> checkRequiredVaccinationsByCountry(entrant))
+.map("Entry denied: missing required %s vaccination."::formatted);
+----
+* regexp look behind assertion
+[,java]
+----
+public static final Pattern REQUIRED_DOCUMENTS_PATTERN = Pattern.compile("(.*) require (.*)(?<!vaccination)$");
+----
 
