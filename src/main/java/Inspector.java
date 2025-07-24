@@ -258,32 +258,38 @@ public class Inspector {
         private static final Pattern COMMA_SEPARATOR = Pattern.compile(", ");
 
         private final Set<String> requiredVaccinationsForAll = new HashSet<>();
+        private final Set<String> requiredVaccinationsForForeigners = new HashSet<>();
         private final Map<String, Set<String>> requiredVaccinationsByNation = new HashMap<>();
 
         @Override
         public Optional<String> check(final Entrant entrant) {
             return checkRequiredVaccinationsForAll(entrant)
+                .or(() -> checkRequiredVaccinationsForForeigner(entrant))
                 .or(() -> checkRequiredVaccinationsByCountry(entrant))
                 .map("Entry denied: missing required %s vaccination."::formatted);
         }
 
         private Optional<String> checkRequiredVaccinationsForAll(final Entrant entrant) {
-            for (final String requiredVaccination : requiredVaccinationsForAll) {
-                final Map<String, String> certificateOfVaccination = entrant.documents.get(Documents.CERTIFICATE_OF_VACCINATION);
-                if (certificateOfVaccination == null || hasNotRequiredVaccination(requiredVaccination, certificateOfVaccination)) {
-                    return Optional.of(requiredVaccination);
-                }
-            }
-            return Optional.empty();
+            return checkRequiredVaccinations(entrant, requiredVaccinationsForAll);
+        }
+
+        private Optional<String> checkRequiredVaccinationsForForeigner(final Entrant entrant) {
+            return Optional.of(entrant)
+                .filter(Entrant::isForeigner)
+                .flatMap(foreigner -> checkRequiredVaccinations(foreigner, requiredVaccinationsForForeigners));
         }
 
         private Optional<String> checkRequiredVaccinationsByCountry(final Entrant entrant) {
-            if (requiredVaccinationsByNation.containsKey(entrant.getNation())) {
-                for (final String requiredVaccination : requiredVaccinationsByNation.get(entrant.getNation())) {
-                    final Map<String, String> certificateOfVaccination = entrant.documents.get(Documents.CERTIFICATE_OF_VACCINATION);
-                    if (certificateOfVaccination == null || hasNotRequiredVaccination(requiredVaccination, certificateOfVaccination)) {
-                        return Optional.of(requiredVaccination);
-                    }
+            return Optional.of(entrant)
+                .filter(foreigner -> requiredVaccinationsByNation.containsKey(foreigner.getNation()))
+                .flatMap(foreigner -> checkRequiredVaccinations(foreigner, requiredVaccinationsByNation.get(entrant.getNation())));
+        }
+
+        private Optional<String> checkRequiredVaccinations(final Entrant entrant, final Set<String> requiredVaccinationsForForeigners) {
+            for (final String requiredVaccination : requiredVaccinationsForForeigners) {
+                final Map<String, String> certificateOfVaccination = entrant.documents.get(Documents.CERTIFICATE_OF_VACCINATION);
+                if (certificateOfVaccination == null || hasNotRequiredVaccination(requiredVaccination, certificateOfVaccination)) {
+                    return Optional.of(requiredVaccination);
                 }
             }
             return Optional.empty();
@@ -296,20 +302,23 @@ public class Inspector {
 
         @Override
         public void extractFromBulletinLine(final String bulletinLine) {
-            final Matcher matcher = VACCINATION_PATTERN.matcher(bulletinLine);
-            if (matcher.matches()) {
-                final List<String> vaccinations = Arrays.asList(COMMA_SEPARATOR.split(matcher.group(2)));
-                final String target = matcher.group(1);
-                if (target.equals("Entrants")) {
+            final Matcher vaccinationMatcher = VACCINATION_PATTERN.matcher(bulletinLine);
+            if (vaccinationMatcher.matches()) {
+                final List<String> vaccinations = Arrays.asList(COMMA_SEPARATOR.split(vaccinationMatcher.group(2)));
+                final String target = vaccinationMatcher.group(1);
+                if ("Entrants".equals(target)) {
                     requiredVaccinationsForAll.addAll(vaccinations);
-                } else {
+                } else if ("Foreigners".equals(target)) {
+                    requiredVaccinationsForForeigners.addAll(vaccinations);
+                } else if (target.contains("Citizens of")) {
                     addRequiredVaccinationsForNations(target, vaccinations);
                 }
             }
         }
 
         private void addRequiredVaccinationsForNations(final String target, final List<String> vaccinations) {
-            Arrays.stream(COMMA_SEPARATOR.split(target))
+            final String nationsTarget = target.substring(13);
+            Arrays.stream(COMMA_SEPARATOR.split(nationsTarget))
                 .forEach(nation -> requiredVaccinationsByNation.put(nation, new HashSet<>(vaccinations)));
         }
     }

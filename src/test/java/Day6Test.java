@@ -269,6 +269,6 @@ class Day6Test {
                 VACCINES: HPV, cowpox
                 """);
 
-        assertEquals("Entry denied: missing required vaccination.", inspector.inspect(entrant));
+        assertEquals("Entry denied: missing required polio vaccination.", inspector.inspect(entrant));
     }
 }
